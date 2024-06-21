@@ -1,0 +1,7 @@
+POST https://rab6rtferj.execute-api.us-east-2.amazonaws.com/dev/tasks HTTP/1.1
+content-type: application/json
+
+{
+    "name": "foobar",
+    "message": "Hello World"
+}
