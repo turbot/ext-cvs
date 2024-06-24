@@ -15,8 +15,17 @@ resource "aws_lambda_function" "turbot_snow_webhook" {
       AUTH_SECRET_SSM_PARAM = aws_ssm_parameter.authsecret_param.name
       SN_INSTANCE_SSM_PARAM = aws_ssm_parameter.sn_instance.name
       API_TOKEN_SSM_PARAM   = aws_ssm_parameter.api_token.name
+      HTTP_PROXY            = "http://eastproxies.cvshealth.com:9119"
+      HTTPS_PROXY           = "http://eastproxies.cvshealth.com:9119"
+      NO_PROXY              = "169.254.169.254,169.254.170.2,localhost"
     }
   }
+
+  vpc_config {
+    subnet_ids         = [var.subnet_ids]
+    security_group_ids = [var.security_group]
+  }
+
 
 }
 

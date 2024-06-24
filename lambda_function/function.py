@@ -4,10 +4,10 @@ import os
 import requests
 from requests.auth import HTTPBasicAuth
 
-def check_existing_tasks(session, sn_instance, azure_vm_id):
+def check_existing_tasks(session, sn_instance, azure_vm_id, proxies):
     api_endpoint = get_sn_turbot_endpoint(sn_instance)
     endpoint = f"{api_endpoint}?sysparm_query=object_id={azure_vm_id}"
-    response = session.get(endpoint)
+    response = session.get(endpoint, proxies=proxies)
     if response.status_code == 200:
         results = response.json().get('result', [])
         return results
@@ -15,14 +15,14 @@ def check_existing_tasks(session, sn_instance, azure_vm_id):
         print(f"Failed to query existing tasks: {response.status_code}")
         return []
 
-def close_task(session, sn_instance, task_sys_id):
+def close_task(session, sn_instance, task_sys_id, proxies):
     close_endpoint = f"{sn_instance}/api/now/table/task/{task_sys_id}"
     payload = {
         "state": "7",  # Assuming '7' is the state for 'Closed'
         "close_code": "Closed/Resolved by Caller",
         "close_notes": "The problem has been resolved."
     }
-    response = session.patch(close_endpoint, json=payload)
+    response = session.patch(close_endpoint, json=payload, proxies=proxies)
 
     if response.status_code == 200:
         result = {
@@ -38,17 +38,14 @@ def close_task(session, sn_instance, task_sys_id):
     
     return result
 
-def close_tasks(session, sn_instance, existing_tasks):
+def close_tasks(session, sn_instance, existing_tasks, proxies):
     for task in existing_tasks:
-        close_task(session, sn_instance, task['sys_id'])
-
-def get_sn_session(sn_instance, authuser, authsecret):
-    pass
+        close_task(session, sn_instance, task['sys_id'], proxies)
 
 def get_sn_turbot_endpoint(sn_instance):
     return f'{sn_instance}/api/aelim/turbot_follow_on_task'
 
-def open_task(session, sn_instance, azure_vm_id, resource_owner='Unknown'):
+def open_task(session, sn_instance, azure_vm_id, proxies, resource_owner='Unknown'):
     api_endpoint = get_sn_turbot_endpoint(sn_instance)
     description = (
         "There is a problem with the 'costcenter' tag on this resource. "
@@ -70,7 +67,7 @@ def open_task(session, sn_instance, azure_vm_id, resource_owner='Unknown'):
     }
 
     try:
-        response = session.post(api_endpoint, json=payload)
+        response = session.post(api_endpoint, json=payload, proxies=proxies)
 
         if response.status_code == 200:
             result = {
@@ -103,6 +100,12 @@ def lambda_handler(event, context):
         authsecret = ssm_client.get_parameter(Name=os.environ['AUTH_SECRET_SSM_PARAM'], WithDecryption=True)['Parameter']['Value']
         sn_instance = ssm_client.get_parameter(Name=os.environ['SN_INSTANCE_SSM_PARAM'], WithDecryption=True)['Parameter']['Value']
         api_token = ssm_client.get_parameter(Name=os.environ['API_TOKEN_SSM_PARAM'], WithDecryption=True)['Parameter']['Value']
+        https_proxy = os.environ['HTTPS_PROXY']
+        http_proxy = os.environ['HTTP_PROXY']
+        proxies = {
+            'http': proxy_url,
+            'https': proxy_url,
+        }
 
         if event.get('apiToken') == api_token:
         
@@ -113,11 +116,11 @@ def lambda_handler(event, context):
 
             for alert in event.get('alerts'):
                 print(f"Processing alert: {alert}")
-                existing_tasks = check_existing_task(session, sn_instance, alert.get('vmId'))
+                existing_tasks = check_existing_task(session, sn_instance, alert.get('vmId'), proxies)
                 if existing_tasks:
                     if alert.get('status') == "ok":
                         print("Tags in ok state, removing existing tasks.")
-                        close_tasks(session, sn_instance, existing_tasks)
+                        close_tasks(session, sn_instance, existing_tasks, proxies)
                     elif alert.get('status') == "alarm":
                         print("Tagging task already exists, taking no action.")
                     else:
@@ -127,7 +130,7 @@ def lambda_handler(event, context):
                         print("Tags in ok state, taking no action.")
                     elif alert.get('status') == "alarm":
                         print("Opening task for alarm.")
-                        open_task(session, sn_instance, alert.get('vmId'), alert.get('owner'))
+                        open_task(session, sn_instance, alert.get('vmId'), alert.get('owner'), proxies)
                     else:
                         print("Error! unknown status type: {}".format(alert.get('status')))
 
