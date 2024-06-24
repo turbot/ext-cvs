@@ -102,40 +102,47 @@ def lambda_handler(event, context):
         authname = ssm_client.get_parameter(Name=os.environ['AUTH_NAME_SSM_PARAM'], WithDecryption=True)['Parameter']['Value']
         authsecret = ssm_client.get_parameter(Name=os.environ['AUTH_SECRET_SSM_PARAM'], WithDecryption=True)['Parameter']['Value']
         sn_instance = ssm_client.get_parameter(Name=os.environ['SN_INSTANCE_SSM_PARAM'], WithDecryption=True)['Parameter']['Value']
+        api_token = ssm_client.get_parameter(Name=os.environ['API_TOKEN_SSM_PARAM'], WithDecryption=True)['Parameter']['Value']
+
+        if event.get('apiToken') == api_token:
         
-        print("Get SN Session")
-        session = requests.Session()
-        session.auth = (sn_username, sn_password)
-        session.headers.update({'Content-Type': 'application/json', 'Accept': 'application/json'})
+            print("Get SN Session")
+            session = requests.Session()
+            session.auth = (sn_username, sn_password)
+            session.headers.update({'Content-Type': 'application/json', 'Accept': 'application/json'})
 
-        for alert in event.get('alerts'):
-            print(f"Processing alert: {alert}")
-            existing_tasks = check_existing_task(session, sn_instance, alert.get("vmId"))
-            if existing_tasks:
-                if alert.get('status') == "ok":
-                    print("Tags in ok state, removing existing tasks.")
-                    close_tasks(session, sn_instance, existing_tasks)
-                elif alert.get('status') == "alarm":
-                    print("Tagging task already exists, taking no action.")
+            for alert in event.get('alerts'):
+                print(f"Processing alert: {alert}")
+                existing_tasks = check_existing_task(session, sn_instance, alert.get('vmId'))
+                if existing_tasks:
+                    if alert.get('status') == "ok":
+                        print("Tags in ok state, removing existing tasks.")
+                        close_tasks(session, sn_instance, existing_tasks)
+                    elif alert.get('status') == "alarm":
+                        print("Tagging task already exists, taking no action.")
+                    else:
+                        print("Error! unknown status type: {}".format(alert.get('status')))
                 else:
-                    print("Error! unknown status type: {}".format(alert.get('status')))
+                    if alert.get('ok') == "alarm":
+                        print("Tags in ok state, taking no action.")
+                    elif alert.get('status') == "alarm":
+                        print("Opening task for alarm.")
+                        open_task(session, sn_instance, alert.get('vmId'), alert.get('owner'))
+                    else:
+                        print("Error! unknown status type: {}".format(alert.get('status')))
+
+            if response.status_code == 200:
+                print(response.body)
+                status = 200
+                api_response = "ok"
             else:
-                if alert.get('ok') == "alarm":
-                    print("Tags in ok state, taking no action.")
-                elif alert.get('status') == "alarm":
-                    print("Opening task for alarm.")
-                    open_task(session, sn_instance, alert.get("vmId"), alert.get("owner"))
-                else:
-                    print("Error! unknown status type: {}".format(alert.get('status')))
-
-        if response.status_code == 200:
-            print(response.body)
+                print(response.body)
+                status = response.status_code
+                api_response = response.body
+        else:
+            print("Bad API token. Ignoring request.")
             status = 200
             api_response = "ok"
-        else:
-            print(response.body)
-            status = response.status_code
-            api_response = response.body
 
         response = {
             'statusCode': status,

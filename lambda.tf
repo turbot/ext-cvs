@@ -14,6 +14,7 @@ resource "aws_lambda_function" "turbot_snow_webhook" {
       AUTH_NAME_SSM_PARAM   = aws_ssm_parameter.authname_param.name
       AUTH_SECRET_SSM_PARAM = aws_ssm_parameter.authsecret_param.name
       SN_INSTANCE_SSM_PARAM = aws_ssm_parameter.sn_instance.name
+      API_TOKEN_SSM_PARAM   = aws_ssm_parameter.api_token.name
     }
   }
 
