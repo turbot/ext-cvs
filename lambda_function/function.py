@@ -109,15 +109,24 @@ def lambda_handler(event, context):
         session.headers.update({'Content-Type': 'application/json', 'Accept': 'application/json'})
 
         for alert in event.get('alerts'):
+            print(f"Processing alert: {alert}")
             existing_tasks = check_existing_task(session, sn_instance, alert.get("vmId"))
-            if existing_tasks and alert.get('status') == "ok":
-                close_tasks(session, sn_instance, existing_tasks)
-            elif existing_tasks and alert.get('status') == "alarm":
-                print("Tagging task already exists, taking no action.")
-            elif alert.get('status') == "alarm":
-                open_task(session, sn_instance, alert.get("vmId"), alert.get("owner"))
+            if existing_tasks:
+                if alert.get('status') == "ok":
+                    print("Tags in ok state, removing existing tasks.")
+                    close_tasks(session, sn_instance, existing_tasks)
+                elif alert.get('status') == "alarm":
+                    print("Tagging task already exists, taking no action.")
+                else:
+                    print("Error! unknown status type: {}".format(alert.get('status')))
             else:
-                print("Error! unknown status type: {}".format(alert.get('status')))
+                if alert.get('ok') == "alarm":
+                    print("Tags in ok state, taking no action.")
+                elif alert.get('status') == "alarm":
+                    print("Opening task for alarm.")
+                    open_task(session, sn_instance, alert.get("vmId"), alert.get("owner"))
+                else:
+                    print("Error! unknown status type: {}".format(alert.get('status')))
 
         if response.status_code == 200:
             print(response.body)
