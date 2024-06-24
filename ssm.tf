@@ -9,3 +9,9 @@ resource "aws_ssm_parameter" "authsecret_param" {
   type        = "SecureString"
   value       = "pass"
 }
+
+resource "aws_ssm_parameter" "sn_instance" {
+  name        = "/turbot/snow-api/sn-instance"
+  type        = "String"
+  value       = "https://dev12345678.service-now.com"
+}

@@ -47,11 +47,13 @@ resource "aws_lambda_permission" "apigw_lambda" {
   source_arn = "${aws_api_gateway_rest_api.snow_api.execution_arn}/*/*/*"
 }
 
-resource "aws_api_gateway_method_response" "proxy" {
+resource "aws_api_gateway_method_response" "response_200" {
   rest_api_id = aws_api_gateway_rest_api.snow_api.id
   resource_id = aws_api_gateway_resource.root.id
   http_method = aws_api_gateway_method.proxy.http_method
   status_code = "200"
+
+  response_models = {"text/html":"Empty"}
 
   //cors section
   response_parameters = {
@@ -59,21 +61,23 @@ resource "aws_api_gateway_method_response" "proxy" {
     "method.response.header.Access-Control-Allow-Methods" = true,
     "method.response.header.Access-Control-Allow-Origin" = true
   }
-
 }
 
-resource "aws_api_gateway_integration_response" "proxy" {
+resource "aws_api_gateway_integration_response" "ok" {
   rest_api_id = aws_api_gateway_rest_api.snow_api.id
   resource_id = aws_api_gateway_resource.root.id
   http_method = aws_api_gateway_method.proxy.http_method
-  status_code = aws_api_gateway_method_response.proxy.status_code
+  status_code = aws_api_gateway_method_response.response_200.status_code
+  response_templates = {
+    "text/html" = "#set($inputRoot = $input.path('$'))\n$inputRoot.body"
+  }
 
   //cors
   response_parameters = {
     "method.response.header.Access-Control-Allow-Headers" =  "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
     "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS,POST,PUT'",
     "method.response.header.Access-Control-Allow-Origin" = "'*'"
-}
+  }
 
   depends_on = [
     aws_api_gateway_method.proxy,
