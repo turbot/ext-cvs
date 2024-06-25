@@ -11,13 +11,16 @@ resource "aws_lambda_function" "turbot_snow_webhook" {
 
   environment {
     variables = {
-      AUTH_NAME_SSM_PARAM   = aws_ssm_parameter.authname_param.name
-      AUTH_SECRET_SSM_PARAM = aws_ssm_parameter.authsecret_param.name
-      SN_INSTANCE_SSM_PARAM = aws_ssm_parameter.sn_instance.name
-      API_TOKEN_SSM_PARAM   = aws_ssm_parameter.api_token.name
-      HTTP_PROXY            = "http://eastproxies.cvshealth.com:9119"
-      HTTPS_PROXY           = "http://eastproxies.cvshealth.com:9119"
-      NO_PROXY              = "169.254.169.254,169.254.170.2,localhost"
+      AUTH_NAME_SSM_PARAM     = aws_ssm_parameter.authname_param.name
+      AUTH_SECRET_SSM_PARAM   = aws_ssm_parameter.authsecret_param.name
+      SN_INSTANCE_SSM_PARAM   = aws_ssm_parameter.sn_instance.name
+      TURBOT_KEY_SSM_PARAM    = aws_ssm_parameter.turbot-key.name
+      TURBOT_SECRET_SSM_PARAM = aws_ssm_parameter.turbot-secret.name
+      WORKSPACE_SSM_PARAM     = aws_ssm_parameter.turbot-workspace.name
+      POLLING_WINDOW          = 10
+      HTTP_PROXY              = "http://eastproxies.cvshealth.com:9119"
+      HTTPS_PROXY             = "http://eastproxies.cvshealth.com:9119"
+      NO_PROXY                = "169.254.169.254,169.254.170.2,localhost"
     }
   }
 
@@ -25,7 +28,6 @@ resource "aws_lambda_function" "turbot_snow_webhook" {
     subnet_ids         = [var.subnet_ids]
     security_group_ids = [var.security_group]
   }
-
 
 }
 

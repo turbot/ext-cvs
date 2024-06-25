@@ -98,54 +98,75 @@ def lambda_handler(event, context):
         print("Retrieve the parameters from SSM")
         authname = ssm_client.get_parameter(Name=os.environ['AUTH_NAME_SSM_PARAM'], WithDecryption=True)['Parameter']['Value']
         authsecret = ssm_client.get_parameter(Name=os.environ['AUTH_SECRET_SSM_PARAM'], WithDecryption=True)['Parameter']['Value']
-        sn_instance = ssm_client.get_parameter(Name=os.environ['SN_INSTANCE_SSM_PARAM'], WithDecryption=True)['Parameter']['Value']
-        api_token = ssm_client.get_parameter(Name=os.environ['API_TOKEN_SSM_PARAM'], WithDecryption=True)['Parameter']['Value']
+        sn_instance = ssm_client.get_parameter(Name=os.environ['SN_INSTANCE_SSM_PARAM'], WithDecryption=False)['Parameter']['Value']
+        turbot_key = ssm_client.get_parameter(Name=os.environ['TURBOT_KEY_SSM_PARAM'], WithDecryption=True)['Parameter']['Value']
+        turbot_secret = ssm_client.get_parameter(Name=os.environ['TURBOT_SECRET_SSM_PARAM'], WithDecryption=True)['Parameter']['Value']
+        turbot_workspace = ssm_client.get_parameter(Name=os.environ['WORKSPACE_SSM_PARAM'], WithDecryption=False)['Parameter']['Value']
+        polling_window = os.environ['POLLING_WINDOW']
+
         https_proxy = os.environ['HTTPS_PROXY']
         http_proxy = os.environ['HTTP_PROXY']
         proxies = {
             'http': proxy_url,
             'https': proxy_url,
         }
-
-        if event.get('apiToken') == api_token:
         
-            print("Get SN Session")
-            session = requests.Session()
-            session.auth = (sn_username, sn_password)
-            session.headers.update({'Content-Type': 'application/json', 'Accept': 'application/json'})
+        print("Get SN Session")
+        snow_session = requests.Session()
+        snow_session.auth = (sn_username, sn_password)
+        snow_session.headers.update({'Content-Type': 'application/json', 'Accept': 'application/json'})
 
-            for alert in event.get('alerts'):
-                print(f"Processing alert: {alert}")
-                existing_tasks = check_existing_task(session, sn_instance, alert.get('vmId'), proxies)
-                if existing_tasks:
-                    if alert.get('status') == "ok":
-                        print("Tags in ok state, removing existing tasks.")
-                        close_tasks(session, sn_instance, existing_tasks, proxies)
-                    elif alert.get('status') == "alarm":
-                        print("Tagging task already exists, taking no action.")
-                    else:
-                        print("Error! unknown status type: {}".format(alert.get('status')))
-                else:
-                    if alert.get('ok') == "alarm":
-                        print("Tags in ok state, taking no action.")
-                    elif alert.get('status') == "alarm":
-                        print("Opening task for alarm.")
-                        open_task(session, sn_instance, alert.get('vmId'), alert.get('owner'), proxies)
-                    else:
-                        print("Error! unknown status type: {}".format(alert.get('status')))
-
-            if response.status_code == 200:
-                print(response.body)
-                status = 200
-                api_response = "ok"
+        print("Get Guardrails Session")
+        turbot_session = requests.Session()
+        turbot_session.headers.update({'Content-Type': 'application/json'})
+        turbot_session.auth = HTTPBasicAuth(turbot_key, turbot_secret)
+        query_endpoint = f"{turbot_workspace}/api/latest/graphql"
+        health_endpoint = f"{turbot_workspace}/api/latest/turbot/health"
+        try:
+            response = turbot_session.get(health_endpoint)
+            if response.status_code != 200:
+                print('Health Check: Success!')
             else:
-                print(response.body)
-                status = response.status_code
-                api_response = response.body
-        else:
-            print("Bad API token. Ignoring request.")
+                print(f'Failed to perform health check: {response.status_code}')
+                print(response.text)
+                exit()
+        except requests.exceptions.ConnectionError:
+            print("Failed to connect to workspace, exiting.")
+            exit()
+        
+        print("Get latest notifications"):
+            query = '''
+                
+            '''
+
+        for alert in event.get('alerts'):
+            print(f"Processing alert: {alert}")
+            existing_tasks = check_existing_task(session, sn_instance, alert.get('vmId'), proxies)
+            if existing_tasks:
+                if alert.get('status') == "ok":
+                    print("Tags in ok state, removing existing tasks.")
+                    close_tasks(session, sn_instance, existing_tasks, proxies)
+                elif alert.get('status') == "alarm":
+                    print("Tagging task already exists, taking no action.")
+                else:
+                    print("Error! unknown status type: {}".format(alert.get('status')))
+            else:
+                if alert.get('ok') == "alarm":
+                    print("Tags in ok state, taking no action.")
+                elif alert.get('status') == "alarm":
+                    print("Opening task for alarm.")
+                    open_task(session, sn_instance, alert.get('vmId'), alert.get('owner'), proxies)
+                else:
+                    print("Error! unknown status type: {}".format(alert.get('status')))
+
+        if response.status_code == 200:
+            print(response.body)
             status = 200
             api_response = "ok"
+        else:
+            print(response.body)
+            status = response.status_code
+            api_response = response.body
 
         response = {
             'statusCode': status,

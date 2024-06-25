@@ -21,3 +21,21 @@ resource "aws_ssm_parameter" "sn_instance" {
   type        = "String"
   value       = "https://dev12345678.service-now.com"
 }
+
+resource "aws_ssm_parameter" "turbot-key" {
+  name        = "/turbot/snow-api/turbot-key"
+  type        = "SecureString"
+  value       = "replace"
+}
+
+resource "aws_ssm_parameter" "turbot-secret" {
+  name        = "/turbot/snow-api/turbot-secret"
+  type        = "SecureString"
+  value       = "replace"
+}
+
+resource "aws_ssm_parameter" "turbot-workspace" {
+  name        = "/turbot/snow-api/turbot-workspace"
+  type        = "SecureString"
+  value       = "https://console.turbot-dev.aetna.com"
+}
