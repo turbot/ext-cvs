@@ -1,0 +1,23 @@
+////////
+// Edit the policy:  `Turbot > Notifications > Rule-Based Routing` and add this:
+
+- rules: "NOTIFY $.oldControl.state:ok,tbd,invalid,error $.control.state:alarm $.controlType.uri:'tmod:@turbot/azure-compute#/control/types/virtualMachineTags'"
+	slackWebhookUrl: https://s0hzj9uzy6.execute-api.us-east-1.amazonaws.com/dev/tasks
+- rules: "NOTIFY $.oldControl.state:alarm $.control.state:ok $.controlType.uri:'tmod:@turbot/azure-compute#/control/types/virtualMachineTags'"
+	slackWebhookUrl: https://s0hzj9uzy6.execute-api.us-east-1.amazonaws.com/dev/tasks
+
+
+////////
+// Edit the policy:  `Turbot > Notifications > Slack > Control Template > Body` and add this:
+
+{% input %} query controlGet($id: ID!, $resourceId: ID!) { resource { vmId: get(path:"vmId") turbot { tags } } } {% endinput %} { "apiToken": "c7594f45-6d92-f29c-eb0e-521490c974f1", "alerts" : [ { "status": "{{ newControl.state }}", "vmId": "{{ $.resource.vmId }}", "owner": "{{ $.resource.turbot.tags['owner'] }}" } ] }
+
+
+////////
+// Edit the policy:  `Turbot > Notifications > Slack > Control Template > Batch Body` and add this:
+
+{% input %} query notificationDetails($filter: [String!], $resourceId: ID!) { notifications(filter: $filter) { items { control { state resource { vmId: get(path: "vmId") turbot { tags } } } } } } {% endinput %} { "apiToken": "c7594f45-6d92-f29c-eb0e-521490c974f1", "alerts" : [ {%- for notification in $.notifications.items -%} { "status": "{{ notification.control.state }}", "vmId": "{{ notification.resource.vmId }}", "owner": "{{ notification.resource.turbot.tags['owner'] }}" }, {%- endfor -%} ] }
+
+
+////////
+// Edit the policy:  `Turbot > Notifications` and set to enabled.

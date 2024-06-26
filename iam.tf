@@ -33,7 +33,8 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "ec2:DescribeNetworkInterfaces",
           "ec2:DetachNetworkInterface",
           "ec2:AssignPrivateIpAddresses",
-          "ec2:UnassignPrivateIpAddresses"
+          "ec2:UnassignPrivateIpAddresses",
+          "kms:decrypt"
         ]
         Effect = "Allow"
         Resource = "*"
