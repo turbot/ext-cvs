@@ -222,15 +222,15 @@ def lambda_handler(event, context):
             if state in ["ok","alarm"]:
                 vmId = notification.get("resource",).get("data",).get("vmId","")
                 owner = notification.get("resource").get("tags").get("resourceowner", "unknown")
-            if vmId and state:
-                if vmId in alerts:
-                    print("Duplicate VM, Skipping")
-                else:
-                    print(f"Found Alert for vm: {vmId}")
-                    alerts[vmId] = {
-                        "state": state,
-                        "owner": owner
-                    }
+                if vmId and state:
+                    if vmId in alerts:
+                        print("Duplicate VM, Skipping")
+                    else:
+                        print(f"Found Alert for vm: {vmId}")
+                        alerts[vmId] = {
+                            "state": state,
+                            "owner": owner
+                        }
         paging = response.get("data").get("notifications").get("paging").get("next")
         if not paging:
             #no more notifications
