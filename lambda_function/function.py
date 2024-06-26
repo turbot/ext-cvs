@@ -7,6 +7,7 @@ from requests.auth import HTTPBasicAuth
 def check_existing_task(session, sn_instance, azure_vm_id, proxies, mode):
     api_endpoint = get_sn_turbot_endpoint(sn_instance)
     endpoint = f"{api_endpoint}?sysparm_query=object_id={azure_vm_id}"
+    print(f"Query existing vm: {endpoint}")
     if mode == "TESTING":
         print(f"Mock call to check existing task: {endpoint}")
         return []
