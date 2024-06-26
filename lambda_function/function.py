@@ -58,6 +58,7 @@ def get_sn_turbot_endpoint(sn_instance):
 
 def open_task(session, sn_instance, azure_vm_id, proxies, resource_owner, mode):
     api_endpoint = get_sn_turbot_endpoint(sn_instance)
+    print(f"Sending Post: {api_endpoint}")
     description = (
         "There is a problem with the 'costcenter' tag on this resource. "
         f"The tag value is {resource_owner} which is invalid. "
@@ -77,31 +78,27 @@ def open_task(session, sn_instance, azure_vm_id, proxies, resource_owner, mode):
         "resource_owner": resource_owner
     }
 
+    print(f"Payload: {payload}")
+
     if mode == "TESTING":
         print(f"Mock call to open task: {api_endpoint}")
         print(f"Mock Payload: {payload}")
         return True
-    else:
-        try:
-            response = session.post(api_endpoint, json=payload, proxies=proxies)
 
-            if response.status_code == 200:
-                result = {
-                    'status_code': 200,
-                    'body': f"Successfully added task for Azure VM: {azure_vm_id}"
-                }
-                
-            else:
-                result = {
-                    'status_code': response.status_code,
-                    'body': f"SNow Error creating task: {response.status_code}"
-                }
-                
-        except Exception as e:
-            print(f"Error: {str(e)}")
+    else:
+        response = session.post(api_endpoint, json=payload, proxies=proxies)
+        print(f"SNow response: {response}")
+
+        if response.status_code == 200:
             result = {
-                'status_code': 500,
-                'body': f'Error: {str(e)}'
+                'status_code': 200,
+                'body': f"Successfully added task for Azure VM: {azure_vm_id}"
+            }
+            
+        else:
+            result = {
+                'status_code': response.status_code,
+                'body': f"SNow Error creating task: {response.status_code}"
             }
         
         return result
