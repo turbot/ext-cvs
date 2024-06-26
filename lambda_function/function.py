@@ -203,7 +203,7 @@ def lambda_handler(event, context):
         f"timestamp:>=T-{polling_window}m", 
         "sort:-createTimestamp", 
         "limit:20",
-        "state:ok,alarm"
+        "state:ok,alarm",
         "notificationType:'control_updated'"
     ]
 
