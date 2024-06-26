@@ -239,23 +239,23 @@ def lambda_handler(event, context):
     
     for vmId, alert in alerts.items():
         print(f"Processing alert for vm: {vmId}")
-        existing_tasks = check_existing_task(snow_session, sn_instance, vmId, proxies, execution_mode)
-        if existing_tasks:
-            if alert.get('state') == "ok":
-                print("Tags in ok state, removing existing tasks.")
-                close_tasks(snow_session, sn_instance, existing_tasks, proxies, execution_mode)
-            elif alert.get('state') == "alarm":
-                print("Tagging task already exists, taking no action.")
-            else:
-                print("Error! unknown status type: {}".format(alert.get('status')))
+        # existing_tasks = check_existing_task(snow_session, sn_instance, vmId, proxies, execution_mode)
+        # if existing_tasks:
+        #     if alert.get('state') == "ok":
+        #         print("Tags in ok state, removing existing tasks.")
+        #         close_tasks(snow_session, sn_instance, existing_tasks, proxies, execution_mode)
+        #     elif alert.get('state') == "alarm":
+        #         print("Tagging task already exists, taking no action.")
+        #     else:
+        #         print("Error! unknown status type: {}".format(alert.get('status')))
+        # else:
+        if alert.get('state') == "ok":
+            print("Tags in ok state, taking no action.")
+        elif alert.get('state') == "alarm":
+            print("Opening task for alarm.")
+            open_task(snow_session, sn_instance, vmId, alert.get('owner'), proxies, execution_mode)
         else:
-            if alert.get('state') == "ok":
-                print("Tags in ok state, taking no action.")
-            elif alert.get('state') == "alarm":
-                print("Opening task for alarm.")
-                open_task(snow_session, sn_instance, vmId, alert.get('owner'), proxies, execution_mode)
-            else:
-                print("Error! unknown status type: {}".format(alert.get('status')))
+            print("Error! unknown status type: {}".format(alert.get('status')))
 
     print("Success: {} Notifications processed".format(len(alerts)))
     return {
