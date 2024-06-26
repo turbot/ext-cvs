@@ -133,8 +133,8 @@ def lambda_handler(event, context):
 
     if http_proxy != "":
         proxies = {
-            'http': proxy_url,
-            'https': proxy_url,
+            'http': https_proxy,
+            'https': http_proxy,
         }
     else:
         proxies = None
