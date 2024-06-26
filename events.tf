@@ -2,7 +2,7 @@
 resource "aws_cloudwatch_event_rule" "snow_integration_tick" {
     name = "snow_integration_tick"
     description = "Fires every five minutes"
-    schedule_expression = "rate(5 minutes)"
+    schedule_expression = "rate(2 minutes)"
 }
 
 resource "aws_cloudwatch_event_target" "snow_integration_target" {

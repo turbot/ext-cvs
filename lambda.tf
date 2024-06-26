@@ -4,7 +4,7 @@ resource "aws_lambda_function" "turbot_snow_webhook" {
   role             = aws_iam_role.lambda_role.arn
   handler          = "function.lambda_handler"
   runtime          = "python3.12"
-  timeout          = 30
+  timeout          = 120
   filename         = data.archive_file.lambda_source.output_path
   source_code_hash = data.archive_file.lambda_source.output_base64sha256
 

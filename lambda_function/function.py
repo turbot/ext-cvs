@@ -217,7 +217,8 @@ def lambda_handler(event, context):
         }
         response = graphql_query(turbot_session, query_endpoint, query, vars)
         for notification in response.get("data").get("notifications").get("items"):
-            vmId = notification.get("resource").get("data").get("vmId")
+            print(f"Found Alert: {notification}")
+            vmId = notification.get("resource",{}).get("data",{}).get("vmId","")
             state = notification.get("control").get("state")
             owner = notification.get("resource").get("tags").get("resourceowner", "unknown")
             if vmId and state:
