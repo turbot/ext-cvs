@@ -25,7 +25,7 @@ resource "aws_ssm_parameter" "turbot-secret" {
 resource "aws_ssm_parameter" "sn_instance" {
   name        = "/turbot/snow-api/sn-instance"
   type        = "String"
-  value       = "https://dev12345678.service-now.com"
+  value       = "https://aetnaqa1.service-now.com"
 }
 
 resource "aws_ssm_parameter" "turbot-workspace" {
