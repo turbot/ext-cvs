@@ -217,9 +217,10 @@ def lambda_handler(event, context):
             "paging": paging
         }
         response = graphql_query(turbot_session, query_endpoint, query, vars)
+        print(f"recieved notifications: {response}")
         for notification in response.get("data").get("notifications").get("items"):
             print(f"Found Alert: {notification}")
-            vmId = notification.get("resource",{}).get("data",{}).get("vmId","")
+            vmId = notification.get("resource",).get("data",).get("vmId","")
             state = notification.get("control").get("state")
             owner = notification.get("resource").get("tags").get("resourceowner", "unknown")
             if vmId and state:
