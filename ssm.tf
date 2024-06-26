@@ -1,21 +1,25 @@
 resource "aws_ssm_parameter" "authname_param" {
   name        = "/turbot/snow-api/authname"
   type        = "SecureString"
+  value       = var.sn_name
 }
 
 resource "aws_ssm_parameter" "authsecret_param" {
   name        = "/turbot/snow-api/authsecret"
   type        = "SecureString"
+  value       = var.sn_secret
 }
 
 resource "aws_ssm_parameter" "turbot-key" {
   name        = "/turbot/snow-api/turbot-key"
   type        = "SecureString"
+  value       = var.turbot_key
 }
 
 resource "aws_ssm_parameter" "turbot-secret" {
   name        = "/turbot/snow-api/turbot-secret"
   type        = "SecureString"
+  value       = var.turbot_secret
 }
 
 resource "aws_ssm_parameter" "sn_instance" {

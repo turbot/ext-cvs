@@ -12,3 +12,8 @@ variable "HTTPS_PROXY" {
 variable "NO_PROXY" {
   default = "169.254.169.254,169.254.170.2,localhost"
 }
+
+variable "sn_name" {}
+variable "sn_secret" {}
+variable "turbot_key" {}
+variable "turbot_secret" {}
