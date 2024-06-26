@@ -127,6 +127,7 @@ def lambda_handler(event, context):
     turbot_workspace = ssm_client.get_parameter(Name=os.environ['WORKSPACE_SSM_PARAM'], WithDecryption=False)['Parameter']['Value']
     polling_window = os.environ['POLLING_WINDOW']
     execution_mode = os.environ['EXECUTION_MODE']
+    ssl_verify = True if os.environ['VERIFY_CERTIFICATE'] not in ["False","false","no","0"] else False  
 
     https_proxy = os.environ['HTTPS_PROXY']
     http_proxy = os.environ['HTTP_PROXY']
@@ -142,10 +143,12 @@ def lambda_handler(event, context):
     print("Get SN Session")
     snow_session = requests.Session()
     snow_session.auth = (sn_authname, sn_authsecret)
+    snow_session.verify = ssl_verify
     snow_session.headers.update({'Content-Type': 'application/json', 'Accept': 'application/json'})
 
     print("Get Guardrails Session")
     turbot_session = requests.Session()
+    turbot_session.verify = ssl_verify
     turbot_session.headers.update({'Content-Type': 'application/json'})
     turbot_session.auth = HTTPBasicAuth(turbot_key, turbot_secret)
     query_endpoint = f"{turbot_workspace}/api/latest/graphql"
