@@ -1,4 +1,4 @@
-resource "" "authname_param" {
+resource "aws_ssm_parameter" "authname_param" {
   name        = "/turbot/snow-api/authname"
   type        = "SecureString"
 }
