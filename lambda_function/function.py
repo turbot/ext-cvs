@@ -4,7 +4,7 @@ import os
 import requests
 from requests.auth import HTTPBasicAuth
 
-def check_existing_task(session, sn_instance, azure_vm_id, proxies, mode):
+def check_existing_task(session, sn_instance, azure_vm_id, mode):
     api_endpoint = get_sn_turbot_endpoint(sn_instance)
     endpoint = f"{api_endpoint}?sysparm_query=object_id={azure_vm_id}"
     print(f"Query existing vm: {endpoint}")
@@ -12,7 +12,7 @@ def check_existing_task(session, sn_instance, azure_vm_id, proxies, mode):
         print(f"Mock call to check existing task: {endpoint}")
         return []
     else:
-        response = session.get(endpoint, proxies=proxies)
+        response = session.get(endpoint)
         if response.status_code == 200:
             results = response.json().get('result', [])
             return results
@@ -20,7 +20,7 @@ def check_existing_task(session, sn_instance, azure_vm_id, proxies, mode):
             print(f"Failed to query existing tasks: {response.status_code}")
             return []
 
-def close_task(session, sn_instance, task_sys_id, proxies, mode):
+def close_task(session, sn_instance, task_sys_id, mode):
     close_endpoint = f"{sn_instance}/api/now/table/task/{task_sys_id}"
     payload = {
         "state": "7",  # Assuming '7' is the state for 'Closed'
@@ -33,7 +33,7 @@ def close_task(session, sn_instance, task_sys_id, proxies, mode):
         print(f"Mock Payload: {payload}")
         return True
     else:
-        response = session.patch(close_endpoint, json=payload, proxies=proxies)
+        response = session.patch(close_endpoint, json=payload)
 
         if response.status_code == 200:
             result = {
@@ -49,14 +49,14 @@ def close_task(session, sn_instance, task_sys_id, proxies, mode):
         
         return result
 
-def close_tasks(session, sn_instance, existing_tasks, proxies, mode):
+def close_tasks(session, sn_instance, existing_tasks, mode):
     for task in existing_tasks:
-        close_task(session, sn_instance, task['sys_id'], proxies, mode)
+        close_task(session, sn_instance, task['sys_id'], mode)
 
 def get_sn_turbot_endpoint(sn_instance):
     return f'{sn_instance}/api/aelim/turbot_follow_on_task'
 
-def open_task(session, sn_instance, azure_vm_id, proxies, resource_owner, mode):
+def open_task(session, sn_instance, azure_vm_id, resource_owner, mode):
     api_endpoint = get_sn_turbot_endpoint(sn_instance)
     print(f"Sending Post: {api_endpoint}")
     description = (
@@ -86,7 +86,7 @@ def open_task(session, sn_instance, azure_vm_id, proxies, resource_owner, mode):
         return True
 
     else:
-        response = session.post(api_endpoint, json=payload, proxies=proxies)
+        response = session.post(api_endpoint, json=payload)
         print(f"SNow response: {response}")
 
         if response.status_code == 200:
@@ -126,17 +126,6 @@ def lambda_handler(event, context):
     polling_window = os.environ['POLLING_WINDOW']
     execution_mode = os.environ['EXECUTION_MODE']
     ssl_verify = True if os.environ['VERIFY_CERTIFICATE'] not in ["False","false","no","0"] else False  
-
-    https_proxy = os.environ['HTTPS_PROXY']
-    http_proxy = os.environ['HTTP_PROXY']
-
-    if http_proxy != "":
-        proxies = {
-            'http': https_proxy,
-            'https': http_proxy,
-        }
-    else:
-        proxies = None
     
     print("Get SN Session")
     snow_session = requests.Session()
@@ -237,11 +226,11 @@ def lambda_handler(event, context):
     
     for vmId, alert in alerts.items():
         print(f"Processing alert for vm: {vmId}")
-        # existing_tasks = check_existing_task(snow_session, sn_instance, vmId, proxies, execution_mode)
+        # existing_tasks = check_existing_task(snow_session, sn_instance, vmId, execution_mode)
         # if existing_tasks:
         #     if alert.get('state') == "ok":
         #         print("Tags in ok state, removing existing tasks.")
-        #         close_tasks(snow_session, sn_instance, existing_tasks, proxies, execution_mode)
+        #         close_tasks(snow_session, sn_instance, existing_tasks, execution_mode)
         #     elif alert.get('state') == "alarm":
         #         print("Tagging task already exists, taking no action.")
         #     else:
@@ -251,9 +240,9 @@ def lambda_handler(event, context):
             print("Tags in ok state, taking no action.")
         elif alert.get('state') == "alarm":
             print("Opening task for alarm.")
-            open_task(snow_session, sn_instance, vmId, alert.get('owner'), proxies, execution_mode)
+            open_task(snow_session, sn_instance, vmId, alert.get('owner'), execution_mode)
         else:
-            print("Error! unknown status type: {}".format(alert.get('status')))
+            print("Error! unknown status type: {}".format(alert.get('state')))
 
     print("Success: {} Notifications processed".format(len(alerts)))
     return {
