@@ -4,8 +4,7 @@ resource "aws_lambda_function" "turbot_snow_webhook" {
   role             = aws_iam_role.lambda_role.arn
   handler          = "function.lambda_handler"
   runtime          = "python3.12"
-  # filename         = "lambda_function.zip"
-  # source_code_hash = filebase64sha256("lambda_function.zip")
+  timeout          = 30
   filename         = data.archive_file.lambda_source.output_path
   source_code_hash = data.archive_file.lambda_source.output_base64sha256
 
@@ -18,9 +17,10 @@ resource "aws_lambda_function" "turbot_snow_webhook" {
       TURBOT_SECRET_SSM_PARAM = aws_ssm_parameter.turbot-secret.name
       WORKSPACE_SSM_PARAM     = aws_ssm_parameter.turbot-workspace.name
       POLLING_WINDOW          = 10
-      HTTP_PROXY              = "http://eastproxies.cvshealth.com:9119"
-      HTTPS_PROXY             = "http://eastproxies.cvshealth.com:9119"
-      NO_PROXY                = "169.254.169.254,169.254.170.2,localhost"
+      EXECUTION_MODE          = "TESTING"
+      HTTP_PROXY              = var.HTTP_PROXY
+      HTTPS_PROXY             = var.HTTPS_PROXY
+      NO_PROXY                = var.NO_PROXY
     }
   }
 
@@ -29,6 +29,13 @@ resource "aws_lambda_function" "turbot_snow_webhook" {
     security_group_ids = [var.security_group]
   }
 
+}
+
+resource "aws_lambda_function_event_invoke_config" "example" {
+  function_name = aws_lambda_function.turbot_snow_webhook.function_name
+  qualifier     = "$LATEST"
+  maximum_event_age_in_seconds = 60
+  maximum_retry_attempts       = 0
 }
 
 resource "random_uuid" "lambda_src_hash" {
