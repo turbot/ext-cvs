@@ -220,8 +220,9 @@ def lambda_handler(event, context):
         for notification in response.get("data").get("notifications").get("items"):
             print(f"Found Alert: {notification}")
             state = notification.get("control").get("state")
-            if state in ["ok","alarm"]:
-                vmId = notification.get("resource",).get("data",).get("vmId","")
+            instance_data = notification.get("resource").get("data")
+            if state in ["ok","alarm"] and instance_data:
+                vmId = instance_data.get("vmId","")
                 owner = notification.get("resource").get("tags").get("resourceowner", "unknown")
                 if vmId and state:
                     if vmId in alerts:
