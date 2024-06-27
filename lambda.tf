@@ -17,7 +17,7 @@ resource "aws_lambda_function" "turbot_snow_webhook" {
       TURBOT_SECRET_SSM_PARAM = aws_ssm_parameter.turbot-secret.name
       WORKSPACE_SSM_PARAM     = aws_ssm_parameter.turbot-workspace.name
       VERIFY_CERTIFICATE      = "False"
-      POLLING_WINDOW          = 10
+      POLLING_WINDOW          = 1440
       EXECUTION_MODE          = "RUNNING"
       HTTP_PROXY              = var.HTTP_PROXY
       HTTPS_PROXY             = var.HTTPS_PROXY
