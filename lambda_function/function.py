@@ -87,9 +87,8 @@ def open_task(session, sn_instance, azure_vm_id, resource_owner, mode):
 
     else:
         response = session.post(api_endpoint, json=payload)
-        print("ServiceNow Response: ")
-        for i in response:
-            print(" - ", i, ": ", response[i])
+        print(json.dumps(response.text, indent=4, sort_keys=True, default=lambda o:'<not serializable>'))
+        
 
         if response.status_code == 200:
             result = {
