@@ -209,7 +209,7 @@ def lambda_handler(event, context):
             state = notification.get("control").get("state")
             instance_data = notification.get("resource").get("data")
             if state in ["ok","alarm"] and instance_data:
-                vmId = instance_data.get("vmId","")
+                vmId = instance_data.get("id","")
                 owner = notification.get("resource").get("tags").get("resourceowner", "unknown")
                 if vmId and state:
                     if vmId in alerts:
